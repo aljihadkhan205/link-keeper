@@ -1,0 +1,8 @@
+{
+  "name": "Link Keeper",
+  "description": "Personal link management web application to organize, search, categorize, and track recently viewed bookmarks with Turso database persistence.",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
