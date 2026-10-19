@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { ExternalLink, Star, MoreVertical, Edit2, Trash2, Copy, Check, Globe } from 'lucide-react';
+import { ExternalLink, Star, MoreVertical, Edit2, Trash2, Copy, Check, Globe, BellRing } from 'lucide-react';
 import { LinkItem, ViewMode } from '../types.js';
 import { getFaviconUrl, getDirectFaviconUrl, getHostname } from '../lib/favicon.js';
 import { formatRelativeTime, formatFullDateTime } from '../lib/formatDate.js';
+import { isReminderDue, localDateString } from '../../shared/date.js';
 
 interface LinkCardProps {
   link: LinkItem;
@@ -29,6 +30,25 @@ export const LinkCard: React.FC<LinkCardProps> = ({
   useEffect(() => {
     setImageErrorLevel(0);
   }, [link.url]);
+
+  const reminderDue = isReminderDue(link.remindAt, link.lastViewedAt);
+  const reminderUpcoming = Boolean(link.remindAt) && !reminderDue && (link.remindAt as string) >= localDateString();
+  const reminderLabel = link.remindAt
+    ? new Intl.DateTimeFormat('en-US', { month: 'short', day: 'numeric' }).format(new Date(`${link.remindAt}T00:00:00`))
+    : '';
+  const borderClass = reminderDue
+    ? 'border-amber-400/60 bg-amber-400/5 ring-1 ring-amber-400/30 hover:border-amber-400'
+    : 'border-[#22282C] hover:border-[#323A40]';
+
+  const reminderBadge = reminderDue ? (
+    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-300">
+      <BellRing className="w-3 h-3" /> Reminder: visit today
+    </span>
+  ) : reminderUpcoming ? (
+    <span className="inline-flex items-center gap-1 text-[11px] text-[#929A96]">
+      <BellRing className="w-3 h-3" /> Reminder {reminderLabel}
+    </span>
+  ) : null;
 
   const hostname = getHostname(link.url);
   const primaryFavicon = getFaviconUrl(link.url);
@@ -58,7 +78,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({
     return (
       <div
         onClick={handleCardClick}
-        className="group relative flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 bg-[#15191C] hover:bg-[#1B2023] border border-[#22282C] hover:border-[#323A40] rounded-xl transition-all duration-200 cursor-pointer"
+        className={`group relative flex flex-col md:flex-row md:items-center justify-between gap-3 p-3.5 bg-[#15191C] hover:bg-[#1B2023] border ${borderClass} rounded-xl transition-all duration-200 cursor-pointer`}
       >
         <div className="flex items-center gap-3.5 min-w-0 flex-1">
           {/* Favicon Box */}
@@ -100,6 +120,8 @@ export const LinkCard: React.FC<LinkCardProps> = ({
                 {link.note}
               </p>
             )}
+
+            {reminderBadge && <div className="mt-1">{reminderBadge}</div>}
 
             {/* Zero-Pill unboxed metadata */}
             <div className="flex items-center gap-2 text-[11px] text-[#929A96] mt-1 font-mono">
@@ -189,7 +211,7 @@ export const LinkCard: React.FC<LinkCardProps> = ({
   return (
     <div
       onClick={handleCardClick}
-      className="group relative flex flex-col justify-between p-4 bg-[#15191C] hover:bg-[#1B2023] border border-[#22282C] hover:border-[#323A40] rounded-xl transition-all duration-200 cursor-pointer"
+      className={`group relative flex flex-col justify-between p-4 bg-[#15191C] hover:bg-[#1B2023] border ${borderClass} rounded-xl transition-all duration-200 cursor-pointer`}
     >
       <div>
         {/* Top Header inside Card */}
@@ -255,6 +277,8 @@ export const LinkCard: React.FC<LinkCardProps> = ({
           <p className="text-xs text-[#929A96]/50 italic mb-3">No note added</p>
         )}
       </div>
+
+      {reminderBadge && <div className="mb-1">{reminderBadge}</div>}
 
       {/* Card Footer */}
       <div className="pt-3 border-t border-[#22282C] mt-2">

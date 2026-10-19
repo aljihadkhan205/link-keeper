@@ -1,4 +1,5 @@
 import { normalizeAndValidateUrl, deriveFallbackName } from '../../shared/url.js';
+import { isValidDateOnly } from '../../shared/date.js';
 
 export { normalizeAndValidateUrl, deriveFallbackName };
 
@@ -8,6 +9,7 @@ export interface ValidateLinkInput {
   note?: string;
   category?: string;
   isFavorite?: boolean;
+  remindAt?: string | null;
 }
 
 export interface ValidationResult<T> {
@@ -61,6 +63,16 @@ export function validateLinkPayload(payload: unknown): ValidationResult<Validate
 
   const isFavorite = Boolean(data.isFavorite);
 
+  // Reminder date check (optional, YYYY-MM-DD)
+  let remindAt: string | null = null;
+  if (typeof data.remindAt === 'string' && data.remindAt.trim()) {
+    if (isValidDateOnly(data.remindAt.trim())) {
+      remindAt = data.remindAt.trim();
+    } else {
+      errors.remindAt = 'Reminder must be a valid date';
+    }
+  }
+
   if (Object.keys(errors).length > 0) {
     return { valid: false, errors };
   }
@@ -73,6 +85,7 @@ export function validateLinkPayload(payload: unknown): ValidationResult<Validate
       note: note || undefined,
       category,
       isFavorite,
+      remindAt,
     },
   };
 }

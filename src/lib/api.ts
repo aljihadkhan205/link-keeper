@@ -111,6 +111,7 @@ export async function createLink(payload: {
   note?: string;
   category?: string;
   isFavorite?: boolean;
+  remindAt?: string | null;
 }): Promise<{ success: boolean; link: LinkItem }> {
   return request<{ success: boolean; link: LinkItem }>('/api/links', {
     method: 'POST',
@@ -126,6 +127,7 @@ export async function updateLink(
     note: string | null;
     category: string;
     isFavorite: boolean;
+    remindAt: string | null;
   }>
 ): Promise<{ success: boolean; link: LinkItem }> {
   return request<{ success: boolean; link: LinkItem }>(`/api/links/${encodeURIComponent(id)}`, {

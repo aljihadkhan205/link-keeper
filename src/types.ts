@@ -8,6 +8,7 @@ export interface LinkItem {
   createdAt: string;
   updatedAt: string;
   lastViewedAt?: string | null;
+  remindAt?: string | null;
 }
 
 export interface CategoryItem {

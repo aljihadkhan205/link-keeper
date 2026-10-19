@@ -72,16 +72,16 @@ export default async function handler(req: Request, res: Response) {
         });
       }
 
-      const { name, url, note, category, isFavorite } = validation.data;
+      const { name, url, note, category, isFavorite, remindAt } = validation.data;
       const id = `lnk_${Date.now()}_${Math.random().toString(36).substring(2, 8)}`;
       const now = new Date().toISOString();
       const cleanNote: string | null = note ? String(note) : null;
       const finalCategory: string = category || 'Other';
 
       await db.execute({
-        sql: `INSERT INTO links (id, name, url, note, category, is_favorite, created_at, updated_at, last_viewed_at)
-              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?);`,
-        args: [id, name, url, cleanNote, finalCategory, isFavorite ? 1 : 0, now, now, null],
+        sql: `INSERT INTO links (id, name, url, note, category, is_favorite, created_at, updated_at, last_viewed_at, remind_at)
+              VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
+        args: [id, name, url, cleanNote, finalCategory, isFavorite ? 1 : 0, now, now, null, remindAt ?? null],
       });
 
       // Auto-ensure category exists in categories table

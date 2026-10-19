@@ -12,6 +12,7 @@ export interface LinkRecord {
   created_at: string;
   updated_at: string;
   last_viewed_at: string | null;
+  remind_at: string | null;
 }
 
 export interface LinkItem {
@@ -24,6 +25,7 @@ export interface LinkItem {
   createdAt: string;
   updatedAt: string;
   lastViewedAt?: string | null;
+  remindAt?: string | null;
 }
 
 export interface CategoryRecord {
@@ -82,9 +84,17 @@ export async function initDatabase(): Promise<void> {
       is_favorite INTEGER DEFAULT 0,
       created_at TEXT NOT NULL,
       updated_at TEXT NOT NULL,
-      last_viewed_at TEXT
+      last_viewed_at TEXT,
+      remind_at TEXT
     );
   `);
+
+  // Migration for databases created before reminders existed
+  try {
+    await db.execute(`ALTER TABLE links ADD COLUMN remind_at TEXT;`);
+  } catch {
+    // column already exists
+  }
 
   // 2. Create indexes
   await db.execute(`CREATE INDEX IF NOT EXISTS idx_links_category ON links(category);`);
@@ -216,5 +226,6 @@ export function formatLinkRecord(row: Record<string, unknown>): LinkItem {
     createdAt: String(row.created_at),
     updatedAt: String(row.updated_at),
     lastViewedAt: row.last_viewed_at ? String(row.last_viewed_at) : null,
+    remindAt: row.remind_at ? String(row.remind_at) : null,
   };
 }

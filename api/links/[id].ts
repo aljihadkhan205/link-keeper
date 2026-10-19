@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 import { getDatabaseClient, initDatabase, formatLinkRecord } from '../_lib/database.js';
 import { normalizeAndValidateUrl, makeCategoryId } from '../_lib/validation.js';
 import { isAuthenticated } from '../_lib/auth.js';
+import { isValidDateOnly } from '../../shared/date.js';
 
 export default async function handler(req: Request, res: Response) {
   if (!isAuthenticated(req)) {
@@ -81,12 +82,22 @@ export default async function handler(req: Request, res: Response) {
         isFavorite = body.isFavorite ? 1 : 0;
       }
 
+      let remindAt = (current.remind_at as string | null) ?? null;
+      if (body.remindAt === null || body.remindAt === '') {
+        remindAt = null;
+      } else if (body.remindAt !== undefined) {
+        if (!isValidDateOnly(body.remindAt)) {
+          return res.status(400).json({ error: 'Reminder must be a valid date (YYYY-MM-DD)' });
+        }
+        remindAt = body.remindAt;
+      }
+
       const updatedAt = new Date().toISOString();
 
       // Keep created_at and last_viewed_at untouched
       await db.execute({
-        sql: `UPDATE links SET name = ?, url = ?, note = ?, category = ?, is_favorite = ?, updated_at = ? WHERE id = ?;`,
-        args: [name, url, note, category, isFavorite, updatedAt, id],
+        sql: `UPDATE links SET name = ?, url = ?, note = ?, category = ?, is_favorite = ?, remind_at = ?, updated_at = ? WHERE id = ?;`,
+        args: [name, url, note, category, isFavorite, remindAt, updatedAt, id],
       });
 
       // Insert category if new

@@ -30,7 +30,8 @@ import {
   ApiError,
 } from './lib/api.js';
 import { getHostname, getFaviconUrl } from './lib/favicon.js';
-import { Loader2, Clock, Lock, KeyRound, ShieldAlert, AlertCircle } from 'lucide-react';
+import { isReminderDue } from '../shared/date.js';
+import { Loader2, Clock, Lock, KeyRound, ShieldAlert, AlertCircle, BellRing } from 'lucide-react';
 
 export default function App() {
   // Main Data States
@@ -266,6 +267,7 @@ export default function App() {
     note?: string;
     category?: string;
     isFavorite?: boolean;
+    remindAt?: string | null;
   }) => {
     if (editingLink) {
       // Edit mode
@@ -349,6 +351,9 @@ export default function App() {
     .filter((l) => Boolean(l.lastViewedAt))
     .sort((a, b) => new Date(b.lastViewedAt!).getTime() - new Date(a.lastViewedAt!).getTime())
     .slice(0, 4);
+
+  // Links whose reminder day has arrived and which haven't been opened since
+  const dueReminders = links.filter((l) => isReminderDue(l.remindAt, l.lastViewedAt));
 
   // Initial loading state before auth check completes
   if (authChecking) {
@@ -458,6 +463,36 @@ export default function App() {
           onViewModeChange={handleViewModeChange}
           favoritesCount={favoritesCount}
         />
+
+        {/* Due reminders */}
+        {dueReminders.length > 0 && (
+          <section className="p-4 bg-amber-400/5 border border-amber-400/30 rounded-2xl">
+            <div className="flex items-center gap-2 mb-3">
+              <BellRing className="w-4 h-4 text-amber-400" />
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-amber-300">
+                Reminders — visit today ({dueReminders.length})
+              </h2>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+              {dueReminders.map((item) => (
+                <div
+                  key={`due_${item.id}`}
+                  onClick={() => handleOpenLink(item)}
+                  className="flex items-center gap-3 p-2.5 bg-[#15191C] hover:bg-[#1B2023] border border-amber-400/30 rounded-xl cursor-pointer transition-colors group"
+                >
+                  <div className="min-w-0 flex-1">
+                    <h4 className="text-xs font-semibold text-[#F5F7F4] truncate group-hover:text-amber-300 transition-colors">
+                      {item.name}
+                    </h4>
+                    <span className="text-[10px] text-[#929A96] font-mono truncate block">
+                      {getHostname(item.url)}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </section>
+        )}
 
         {/* Quick "Recently Viewed" Strip (when viewing All Links with no active search) */}
         {activeTab === 'all' && sort !== 'recent_viewed' && !search && selectedCategory === 'All Links' && recentlyViewedSubset.length > 0 && (

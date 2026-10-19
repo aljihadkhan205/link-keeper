@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { X, Globe, Star, Sparkles, Loader2, Link as LinkIcon, Plus } from 'lucide-react';
+import { X, Globe, Star, Sparkles, Loader2, Link as LinkIcon, Plus, BellRing } from 'lucide-react';
 import { LinkItem, CategoryItem } from '../types.js';
+import { localDateString } from '../../shared/date.js';
 import { normalizeAndValidateUrl, deriveFallbackName } from '../../shared/url.js';
 
 interface AddLinkModalProps {
@@ -12,6 +13,7 @@ interface AddLinkModalProps {
     note?: string;
     category?: string;
     isFavorite?: boolean;
+    remindAt?: string | null;
   }) => Promise<void>;
   editLink?: LinkItem | null;
   categories: CategoryItem[];
@@ -32,6 +34,7 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
   const [category, setCategory] = useState('Other');
   const [customCategory, setCustomCategory] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
+  const [remindAt, setRemindAt] = useState('');
   const [saving, setSaving] = useState(false);
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -43,6 +46,7 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
       setCategory(editLink.category || 'Other');
       setCustomCategory('');
       setIsFavorite(editLink.isFavorite);
+      setRemindAt(editLink.remindAt || '');
     } else {
       setUrl('');
       setName('');
@@ -50,6 +54,7 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
       setCategory(categories.some((c) => c.name === 'Other') ? 'Other' : categories[0]?.name || 'Other');
       setCustomCategory('');
       setIsFavorite(false);
+      setRemindAt('');
     }
     setErrors({});
     // eslint-disable-next-line react-hooks/exhaustive-deps -- reset only when the modal opens / target changes, not when categories refresh
@@ -100,6 +105,7 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
         note: note.trim() || undefined,
         category: finalCategory,
         isFavorite,
+        remindAt: remindAt || null,
       });
       onClose();
     } catch (err: unknown) {
@@ -243,6 +249,47 @@ export const AddLinkModal: React.FC<AddLinkModalProps> = ({
               placeholder="Why you saved this link or key information to remember..."
               className="w-full bg-[#111416] text-sm text-[#F5F7F4] placeholder-[#929A96]/50 px-3.5 py-2.5 rounded-lg border border-[#22282C] focus:outline-none focus:border-[#D7FF64] transition-colors resize-none"
             />
+          </div>
+
+          {/* Reminder date */}
+          <div>
+            <label className="flex items-center gap-1.5 text-xs font-semibold text-[#F5F7F4] mb-1.5">
+              <BellRing className="w-3.5 h-3.5 text-[#D7FF64]" />
+              <span>Remind me to visit</span>
+              <span className="text-[#929A96] font-normal">(Optional)</span>
+            </label>
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                type="date"
+                value={remindAt}
+                min={isEditing ? undefined : localDateString()}
+                onChange={(e) => setRemindAt(e.target.value)}
+                className="bg-[#111416] text-sm text-[#F5F7F4] px-3 py-2 rounded-lg border border-[#22282C] focus:outline-none focus:border-[#D7FF64] transition-colors [color-scheme:dark]"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  const d = new Date();
+                  d.setDate(d.getDate() + 1);
+                  setRemindAt(localDateString(d));
+                }}
+                className="px-2.5 py-2 text-xs text-[#D7FF64] hover:bg-[#1B2023] border border-[#22282C] rounded-lg transition-colors"
+              >
+                Tomorrow
+              </button>
+              {remindAt && (
+                <button
+                  type="button"
+                  onClick={() => setRemindAt('')}
+                  className="px-2.5 py-2 text-xs text-[#929A96] hover:text-[#F5F7F4] rounded-lg transition-colors"
+                >
+                  Clear
+                </button>
+              )}
+            </div>
+            <p className="text-[11px] text-[#929A96]/70 mt-1.5">
+              This link will be highlighted from that day until you open it.
+            </p>
           </div>
 
           {/* Favorite Checkbox */}
